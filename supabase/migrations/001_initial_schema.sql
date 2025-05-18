@@ -1,7 +1,15 @@
 -- Enable the UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create products table
+-- Create categories table first (since products will reference it)
+CREATE TABLE IF NOT EXISTS categories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE
+);
+
+-- Create products table with explicit foreign key
 CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -10,20 +18,16 @@ CREATE TABLE IF NOT EXISTS products (
   price DECIMAL(10, 2) NOT NULL,
   image_url TEXT NOT NULL,
   category_id UUID NOT NULL,
-  inventory_count INTEGER NOT NULL DEFAULT 0
-);
-
--- Create categories table
-CREATE TABLE IF NOT EXISTS categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  name TEXT NOT NULL,
-  slug TEXT NOT NULL UNIQUE
+  inventory_count INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT fk_category
+    FOREIGN KEY(category_id)
+    REFERENCES categories(id)
+    ON DELETE CASCADE
 );
 
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
+  id UUID PRIMARY KEY,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   full_name TEXT NOT NULL,
@@ -35,25 +39,32 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'cancelled')),
-  total DECIMAL(10, 2) NOT NULL
+  total DECIMAL(10, 2) NOT NULL,
+  CONSTRAINT fk_user
+    FOREIGN KEY(user_id)
+    REFERENCES profiles(id)
+    ON DELETE CASCADE
 );
 
 -- Create order_items table
 CREATE TABLE IF NOT EXISTS order_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  order_id UUID NOT NULL,
+  product_id UUID NOT NULL,
   quantity INTEGER NOT NULL,
-  price DECIMAL(10, 2) NOT NULL
+  price DECIMAL(10, 2) NOT NULL,
+  CONSTRAINT fk_order
+    FOREIGN KEY(order_id)
+    REFERENCES orders(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_product
+    FOREIGN KEY(product_id)
+    REFERENCES products(id)
+    ON DELETE CASCADE
 );
-
--- Add foreign key constraint to products
-ALTER TABLE products 
-ADD CONSTRAINT fk_products_category 
-FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE;
 
 -- Enable Row Level Security
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
@@ -241,18 +252,3 @@ INSERT INTO categories (name, slug) VALUES
 ('Home & Kitchen', 'home-kitchen'),
 ('Books', 'books'),
 ('Toys & Games', 'toys-games');
-
--- Create a function to handle new user signups
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, full_name, avatar_url, role)
-  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url', 'customer');
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Create a trigger to call the function when a new user signs up
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
