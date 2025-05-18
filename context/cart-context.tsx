@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
+import { syncStripeProducts, getStripeIds } from "@/lib/data/stripe-products"
 
 export type ProductType = "Software" | "Course" | "Book" | "Electronics" | "Clothing" | "Investment" | "Other"
 
@@ -20,6 +21,8 @@ export interface Product {
 
 export interface CartItem extends Product {
   quantity: number
+  stripePriceId?: string
+  stripeProductId?: string
 }
 
 interface CartContextType {
@@ -32,6 +35,7 @@ interface CartContextType {
   setIsCartOpen: (isOpen: boolean) => void
   totalItems: number
   totalPrice: number
+  isStripeReady: boolean
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -41,6 +45,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [totalItems, setTotalItems] = useState(0)
   const [totalPrice, setTotalPrice] = useState(0)
+  const [isStripeReady, setIsStripeReady] = useState(false)
 
   // Load cart from localStorage on initial render
   useEffect(() => {
@@ -52,6 +57,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         console.error("Failed to parse cart from localStorage:", error)
       }
     }
+
+    // Sync Stripe products
+    syncStripeProducts()
+      .then(() => setIsStripeReady(true))
+      .catch((error) => console.error("Failed to sync Stripe products:", error))
   }, [])
 
   // Save cart to localStorage whenever it changes
@@ -70,12 +80,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === product.id)
 
+      // Get Stripe IDs for the product
+      const stripeIds = getStripeIds(product.id)
+
       if (existingItem) {
         // Increment quantity if item already exists
-        return prevItems.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
+        return prevItems.map((item) =>
+          item.id === product.id
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                stripeProductId: stripeIds?.productId || item.stripeProductId,
+                stripePriceId: stripeIds?.priceId || item.stripePriceId,
+              }
+            : item,
+        )
       } else {
         // Add new item with quantity 1
-        return [...prevItems, { ...product, quantity: 1 }]
+        return [
+          ...prevItems,
+          {
+            ...product,
+            quantity: 1,
+            stripeProductId: stripeIds?.productId,
+            stripePriceId: stripeIds?.priceId,
+          },
+        ]
       }
     })
   }
@@ -109,6 +139,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setIsCartOpen,
         totalItems,
         totalPrice,
+        isStripeReady,
       }}
     >
       {children}

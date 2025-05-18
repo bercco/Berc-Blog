@@ -12,7 +12,7 @@ interface CheckoutButtonProps {
 }
 
 export function CheckoutButton({ className }: CheckoutButtonProps) {
-  const { cartItems, totalPrice, clearCart } = useCart()
+  const { cartItems, totalPrice, clearCart, isStripeReady } = useCart()
   const { userId, isSignedIn } = useAuth()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
@@ -36,10 +36,30 @@ export function CheckoutButton({ className }: CheckoutButtonProps) {
       return
     }
 
+    if (!isStripeReady) {
+      toast({
+        title: "Payment system initializing",
+        description: "Please wait a moment while we prepare the checkout.",
+        variant: "default",
+      })
+      return
+    }
+
+    // Check if all items have Stripe price IDs
+    const missingStripeIds = cartItems.some((item) => !item.stripePriceId)
+    if (missingStripeIds) {
+      toast({
+        title: "Checkout error",
+        description: "Some products are not properly configured for checkout. Please try again later.",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
       setIsLoading(true)
 
-      // Create checkout session
+      // Create checkout session with line items using Stripe price IDs
       const response = await fetch("/api/stripe/create-checkout", {
         method: "POST",
         headers: {

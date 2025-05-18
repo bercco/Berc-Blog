@@ -22,6 +22,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid cart items" }, { status: 400 })
     }
 
+    // Check if all items have Stripe price IDs
+    const missingStripeIds = cartItems.some((item) => !item.stripePriceId)
+    if (missingStripeIds) {
+      return NextResponse.json({ error: "Some products are not properly configured for checkout" }, { status: 400 })
+    }
+
     // Calculate total
     const total = cartItems.reduce((sum: number, item: CartItem) => sum + item.price * item.quantity, 0)
 
@@ -48,6 +54,7 @@ export async function POST(req: Request) {
       product_id: item.id,
       quantity: item.quantity,
       price: item.price,
+      stripe_price_id: item.stripePriceId,
     }))
 
     const { error: itemsError } = await supabase.from("order_items").insert(orderItems)
@@ -57,16 +64,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Failed to create order items" }, { status: 500 })
     }
 
-    // Create Stripe checkout session
-    const lineItems = cartItems.map((item: CartItem) => ({
-      price_data: {
-        currency: "usd",
-        product_data: {
-          name: item.name,
-          images: [item.image1],
-        },
-        unit_amount: Math.round(item.price * 100),
-      },
+    // Create Stripe checkout session using price IDs
+    const lineItems = cartItems.map((item: CartItem & { stripePriceId?: string }) => ({
+      price: item.stripePriceId,
       quantity: item.quantity,
     }))
 
