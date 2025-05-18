@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { ChevronRight, ShoppingCart, Heart, Share2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { ProductZoom } from "@/components/product/product-zoom"
 import { ReviewSystem } from "@/components/product/review-system"
-import { useProduct } from "@/hooks/use-products"
+import { products, getRelatedProducts } from "@/lib/data/products"
 
 export default function ProductPage() {
   const params = useParams()
@@ -17,10 +17,34 @@ export default function ProductPage() {
   const { addToCart } = useCart()
   const { toast } = useToast()
   const [quantity, setQuantity] = useState(1)
+  const [product, setProduct] = useState(null)
+  const [relatedProducts, setRelatedProducts] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Use our new hook to fetch the product
-  const productId = Number(params.id)
-  const { product, relatedProducts, isLoading, error } = useProduct(productId)
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setIsLoading(true)
+        const productId = Number(params.id)
+
+        // Find the product in our local data
+        const foundProduct = products.find((p) => p.id === productId)
+
+        if (foundProduct) {
+          setProduct(foundProduct)
+          // Get related products
+          const related = getRelatedProducts(foundProduct, 3)
+          setRelatedProducts(related)
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProduct()
+  }, [params.id])
 
   const handleAddToCart = () => {
     if (!product) return
@@ -44,7 +68,7 @@ export default function ProductPage() {
     )
   }
 
-  if (error || !product) {
+  if (!product) {
     return (
       <div className="container mx-auto px-4 py-24 text-center">
         <h1 className="text-2xl font-bold text-white mb-4">Product not found</h1>
@@ -186,7 +210,7 @@ export default function ProductPage() {
 
         {/* Reviews Section */}
         <div className="mb-16">
-          <ReviewSystem productId={productId.toString()} />
+          <ReviewSystem productId={params.id.toString()} />
         </div>
 
         {/* Related Products */}

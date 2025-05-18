@@ -13,6 +13,7 @@ import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Toaster } from "@/components/ui/toaster"
 import { Suspense } from "react"
+import { AIChatbot } from "@/components/ai-chatbot/ai-chatbot"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -48,6 +49,7 @@ export default function RootLayout({
                 </footer>
                 <CartDrawer />
                 <CustomCursor />
+                <AIChatbot />
                 <Toaster />
               </Suspense>
             </CartProvider>

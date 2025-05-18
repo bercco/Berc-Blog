@@ -1,6 +1,3 @@
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
-
 export interface ForumCategory {
   id: number
   name: string
@@ -95,7 +92,7 @@ export const forumCategories: ForumCategory[] = [
 ]
 
 // Mock forum threads
-export const initialThreads: ForumThread[] = [
+export const forumThreads: ForumThread[] = [
   {
     id: 1,
     title: "The Ultimate Guide to Moving Average Crossover Strategy",
@@ -218,141 +215,6 @@ export const initialComments: ForumComment[] = [
     },
   },
 ]
-
-// Create a store for forum data
-interface ForumState {
-  threads: ForumThread[]
-  comments: ForumComment[]
-  addThread: (
-    thread: Omit<ForumThread, "id" | "created_at" | "last_activity" | "views" | "likes" | "comment_count">,
-  ) => ForumThread
-  addComment: (comment: Omit<ForumComment, "id" | "created_at" | "likes" | "is_edited">) => ForumComment
-  incrementThreadView: (threadId: number) => void
-  likeThread: (threadId: number, userId: string) => void
-  likeComment: (commentId: number) => void
-  getThreadById: (threadId: number) => ForumThread | undefined
-  getThreadsByCategory: (categoryId: number) => ForumThread[]
-  getCommentsByThread: (threadId: number) => ForumComment[]
-  getThreadLikes: (threadId: number) => string[]
-}
-
-export const useForumStore = create<ForumState>()(
-  persist(
-    (set, get) => ({
-      threads: initialThreads,
-      comments: initialComments,
-      threadLikes: {} as Record<number, string[]>,
-
-      addThread: (thread) => {
-        const newThread = {
-          ...thread,
-          id: get().threads.length + 1,
-          created_at: new Date().toISOString(),
-          last_activity: new Date().toISOString(),
-          views: 0,
-          likes: 0,
-          comment_count: 0,
-        }
-
-        set((state) => ({
-          threads: [...state.threads, newThread],
-        }))
-
-        // Update category thread count
-        // In a real app, this would update the category in the database
-
-        return newThread
-      },
-
-      addComment: (comment) => {
-        const newComment = {
-          ...comment,
-          id: get().comments.length + 1,
-          created_at: new Date().toISOString(),
-          likes: 0,
-          is_edited: false,
-        }
-
-        set((state) => ({
-          comments: [...state.comments, newComment],
-          threads: state.threads.map((thread) =>
-            thread.id === comment.thread_id
-              ? {
-                  ...thread,
-                  comment_count: thread.comment_count + 1,
-                  last_activity: new Date().toISOString(),
-                }
-              : thread,
-          ),
-        }))
-
-        return newComment
-      },
-
-      incrementThreadView: (threadId) => {
-        set((state) => ({
-          threads: state.threads.map((thread) =>
-            thread.id === threadId ? { ...thread, views: thread.views + 1 } : thread,
-          ),
-        }))
-      },
-
-      likeThread: (threadId, userId) => {
-        // Check if user already liked this thread
-        const threadLikes = get().threadLikes[threadId] || []
-        if (threadLikes.includes(userId)) {
-          return // User already liked this thread
-        }
-
-        set((state) => ({
-          threads: state.threads.map((thread) =>
-            thread.id === threadId ? { ...thread, likes: thread.likes + 1 } : thread,
-          ),
-          threadLikes: {
-            ...state.threadLikes,
-            [threadId]: [...threadLikes, userId],
-          },
-        }))
-      },
-
-      likeComment: (commentId) => {
-        set((state) => ({
-          comments: state.comments.map((comment) =>
-            comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment,
-          ),
-        }))
-      },
-
-      getThreadById: (threadId) => {
-        return get().threads.find((thread) => thread.id === threadId)
-      },
-
-      getThreadsByCategory: (categoryId) => {
-        return get().threads.filter((thread) => thread.category_id === categoryId)
-      },
-
-      getCommentsByThread: (threadId) => {
-        return get().comments.filter((comment) => comment.thread_id === threadId)
-      },
-
-      getThreadLikes: (threadId) => {
-        return get().threadLikes[threadId] || []
-      },
-    }),
-    {
-      name: "forum-storage",
-    },
-  ),
-)
-
-// Function to get a category by ID or slug
-export function getCategoryById(id: number): ForumCategory | undefined {
-  return forumCategories.find((category) => category.id === id)
-}
-
-export function getCategoryBySlug(slug: string): ForumCategory | undefined {
-  return forumCategories.find((category) => category.slug === slug)
-}
 
 // Function to organize comments into a threaded structure
 export function organizeComments(comments: ForumComment[]): ForumComment[] {

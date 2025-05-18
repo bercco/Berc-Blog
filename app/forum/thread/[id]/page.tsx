@@ -22,33 +22,10 @@ import {
 import { ForumHeader } from "@/components/forum/forum-header"
 import { useAuth } from "@clerk/nextjs"
 import { useMetamask } from "@/hooks/use-metamask"
-import { useSupabase } from "@/lib/supabase/provider"
 import { useToast } from "@/components/ui/use-toast"
 import { CommentBox } from "@/components/forum/comment-box"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import type { Database } from "@/lib/supabase/types"
-
-type Thread = Database["public"]["Tables"]["forum_threads"]["Row"] & {
-  user_profiles: {
-    username: string
-    avatar_url: string | null
-  }
-  forum_categories: {
-    name: string
-    slug: string
-  }
-  forum_thread_tags: {
-    tag: string
-  }[]
-}
-
-type Comment = Database["public"]["Tables"]["forum_comments"]["Row"] & {
-  user_profiles: {
-    username: string
-    avatar_url: string | null
-  }
-  replies?: Comment[]
-}
+import { forumThreads, initialComments, organizeComments } from "@/lib/data/forum"
 
 export default function ThreadPage() {
   const params = useParams()
@@ -56,14 +33,13 @@ export default function ThreadPage() {
   const threadId = params.id as string
   const { userId } = useAuth()
   const { isConnected } = useMetamask()
-  const { supabase } = useSupabase()
   const { toast } = useToast()
 
-  const [thread, setThread] = useState<Thread | null>(null)
-  const [comments, setComments] = useState<Comment[]>([])
+  const [thread, setThread] = useState(null)
+  const [comments, setComments] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingComments, setIsLoadingComments] = useState(true)
-  const [replyingTo, setReplyingTo] = useState<number | null>(null)
+  const [replyingTo, setReplyingTo] = useState(null)
   const [isLiked, setIsLiked] = useState(false)
   const [shareUrl, setShareUrl] = useState("")
 
@@ -73,7 +49,6 @@ export default function ThreadPage() {
     }
 
     fetchThread()
-    incrementViewCount()
   }, [threadId])
 
   const fetchThread = async () => {
@@ -82,49 +57,19 @@ export default function ThreadPage() {
     try {
       setIsLoading(true)
 
-      const { data, error } = await supabase
-        .from("forum_threads")
-        .select(`
-          *,
-          user_profiles (
-            username,
-            avatar_url
-          ),
-          forum_categories (
-            name,
-            slug
-          ),
-          forum_thread_tags (
-            tag
-          )
-        `)
-        .eq("id", threadId)
-        .single()
+      // Find thread in our local data
+      const foundThread = forumThreads.find((t) => t.id.toString() === threadId)
 
-      if (error) {
-        console.error("Error fetching thread:", error)
+      if (foundThread) {
+        setThread(foundThread)
+        fetchComments()
+      } else {
         toast({
           title: "Error",
-          description: "Failed to load thread. Please try again.",
+          description: "Thread not found",
           variant: "destructive",
         })
         router.push("/forum")
-        return
-      }
-
-      setThread(data)
-      fetchComments()
-
-      // Check if user has liked this thread
-      if (userId || isConnected) {
-        const { data: likeData } = await supabase
-          .from("forum_thread_likes")
-          .select("id")
-          .eq("thread_id", threadId)
-          .eq("user_id", userId || "wallet_" + window.ethereum?.selectedAddress)
-          .single()
-
-        setIsLiked(!!likeData)
       }
     } catch (error) {
       console.error("Error fetching thread:", error)
@@ -144,64 +89,17 @@ export default function ThreadPage() {
     try {
       setIsLoadingComments(true)
 
-      const { data, error } = await supabase
-        .from("forum_comments")
-        .select(`
-          *,
-          user_profiles (
-            username,
-            avatar_url
-          )
-        `)
-        .eq("thread_id", threadId)
-        .order("created_at", { ascending: true })
-
-      if (error) {
-        console.error("Error fetching comments:", error)
-        return
-      }
+      // Filter comments for this thread from our local data
+      const threadComments = initialComments.filter((c) => c.thread_id.toString() === threadId)
 
       // Organize comments into threads (parent/child structure)
-      const parentComments: Comment[] = []
-      const childComments: Record<number, Comment[]> = {}
+      const organizedComments = organizeComments(threadComments)
 
-      data.forEach((comment) => {
-        if (comment.parent_id === null) {
-          parentComments.push(comment)
-        } else {
-          if (!childComments[comment.parent_id]) {
-            childComments[comment.parent_id] = []
-          }
-          childComments[comment.parent_id].push(comment)
-        }
-      })
-
-      // Attach replies to their parent comments
-      parentComments.forEach((comment) => {
-        if (childComments[comment.id]) {
-          comment.replies = childComments[comment.id]
-        } else {
-          comment.replies = []
-        }
-      })
-
-      setComments(parentComments)
+      setComments(organizedComments)
     } catch (error) {
       console.error("Error fetching comments:", error)
     } finally {
       setIsLoadingComments(false)
-    }
-  }
-
-  const incrementViewCount = async () => {
-    if (!threadId) return
-
-    try {
-      await supabase.rpc("increment_thread_view", {
-        thread_id: Number.parseInt(threadId),
-      })
-    } catch (error) {
-      console.error("Error incrementing view count:", error)
     }
   }
 
@@ -216,42 +114,21 @@ export default function ThreadPage() {
     }
 
     try {
-      const user_id = userId || "wallet_" + window.ethereum?.selectedAddress
+      // Toggle like state
+      setIsLiked(!isLiked)
 
-      if (isLiked) {
-        // Unlike
-        await supabase.from("forum_thread_likes").delete().eq("thread_id", threadId).eq("user_id", user_id)
-
-        await supabase.rpc("decrement_thread_likes", {
-          thread_id: Number.parseInt(threadId),
+      // Update thread likes count
+      if (thread) {
+        setThread({
+          ...thread,
+          likes: isLiked ? thread.likes - 1 : thread.likes + 1,
         })
-
-        setIsLiked(false)
-        if (thread) {
-          setThread({
-            ...thread,
-            likes: thread.likes - 1,
-          })
-        }
-      } else {
-        // Like
-        await supabase.from("forum_thread_likes").insert({
-          thread_id: Number.parseInt(threadId),
-          user_id: user_id,
-        })
-
-        await supabase.rpc("increment_thread_likes", {
-          thread_id: Number.parseInt(threadId),
-        })
-
-        setIsLiked(true)
-        if (thread) {
-          setThread({
-            ...thread,
-            likes: thread.likes + 1,
-          })
-        }
       }
+
+      toast({
+        title: isLiked ? "Unliked" : "Liked",
+        description: isLiked ? "You have unliked this thread" : "You have liked this thread",
+      })
     } catch (error) {
       console.error("Error toggling like:", error)
       toast({
@@ -315,11 +192,8 @@ export default function ThreadPage() {
             Forum
           </Link>
           <ChevronRight className="h-4 w-4 mx-2" />
-          <Link
-            href={`/forum/category/${thread.forum_categories?.slug || thread.category_id}`}
-            className="hover:text-white"
-          >
-            {thread.forum_categories?.name || "Category"}
+          <Link href={`/forum/category/${thread.category?.slug || thread.category_id}`} className="hover:text-white">
+            {thread.category?.name || "Category"}
           </Link>
           <ChevronRight className="h-4 w-4 mx-2" />
           <span className="text-white">{thread.title}</span>
@@ -332,14 +206,14 @@ export default function ThreadPage() {
             <div className="flex items-center">
               <div className="relative w-10 h-10 rounded-full overflow-hidden mr-3">
                 <Image
-                  src={thread.user_profiles?.avatar_url || "/placeholder.svg?height=100&width=100"}
-                  alt={thread.user_profiles?.username || "User"}
+                  src={thread.user?.avatar_url || "/placeholder.svg?height=100&width=100"}
+                  alt={thread.user?.username || "User"}
                   fill
                   className="object-cover"
                 />
               </div>
               <div>
-                <p className="font-medium text-white">{thread.user_profiles?.username || "Unknown User"}</p>
+                <p className="font-medium text-white">{thread.user?.username || "Unknown User"}</p>
                 <p className="text-xs text-gray-400">Posted {formatDistanceToNow(new Date(thread.created_at))} ago</p>
               </div>
             </div>
@@ -357,11 +231,11 @@ export default function ThreadPage() {
           </div>
 
           {/* Tags */}
-          {thread.forum_thread_tags && thread.forum_thread_tags.length > 0 && (
+          {thread.tags && thread.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
-              {thread.forum_thread_tags.map((tagObj, index) => (
+              {thread.tags.map((tag, index) => (
                 <span key={index} className="inline-block px-3 py-1 bg-dark-700 text-gray-300 text-xs rounded-full">
-                  {tagObj.tag}
+                  {tag}
                 </span>
               ))}
             </div>
@@ -461,14 +335,14 @@ export default function ThreadPage() {
                       <div className="flex items-center">
                         <div className="relative w-8 h-8 rounded-full overflow-hidden mr-3">
                           <Image
-                            src={comment.user_profiles?.avatar_url || "/placeholder.svg?height=100&width=100"}
-                            alt={comment.user_profiles?.username || "User"}
+                            src={comment.user?.avatar_url || "/placeholder.svg?height=100&width=100"}
+                            alt={comment.user?.username || "User"}
                             fill
                             className="object-cover"
                           />
                         </div>
                         <div>
-                          <p className="font-medium text-white">{comment.user_profiles?.username || "Unknown User"}</p>
+                          <p className="font-medium text-white">{comment.user?.username || "Unknown User"}</p>
                           <p className="text-xs text-gray-400">
                             {formatDistanceToNow(new Date(comment.created_at))} ago
                             {comment.is_edited && <span className="ml-2">(edited)</span>}
@@ -502,7 +376,7 @@ export default function ThreadPage() {
                         <CommentBox
                           threadId={threadId}
                           onCommentSubmitted={handleCommentSubmitted}
-                          placeholder={`Reply to ${comment.user_profiles?.username || "Unknown User"}...`}
+                          placeholder={`Reply to ${comment.user?.username || "Unknown User"}...`}
                           parentId={comment.id}
                         />
                       </div>
@@ -517,15 +391,15 @@ export default function ThreadPage() {
                               <div className="flex items-center">
                                 <div className="relative w-6 h-6 rounded-full overflow-hidden mr-2">
                                   <Image
-                                    src={reply.user_profiles?.avatar_url || "/placeholder.svg?height=100&width=100"}
-                                    alt={reply.user_profiles?.username || "User"}
+                                    src={reply.user?.avatar_url || "/placeholder.svg?height=100&width=100"}
+                                    alt={reply.user?.username || "User"}
                                     fill
                                     className="object-cover"
                                   />
                                 </div>
                                 <div>
                                   <p className="font-medium text-white text-sm">
-                                    {reply.user_profiles?.username || "Unknown User"}
+                                    {reply.user?.username || "Unknown User"}
                                   </p>
                                   <p className="text-xs text-gray-400">
                                     {formatDistanceToNow(new Date(reply.created_at))} ago
@@ -555,7 +429,7 @@ export default function ThreadPage() {
                                 <CommentBox
                                   threadId={threadId}
                                   onCommentSubmitted={handleCommentSubmitted}
-                                  placeholder={`Reply to ${reply.user_profiles?.username || "Unknown User"}...`}
+                                  placeholder={`Reply to ${reply.user?.username || "Unknown User"}...`}
                                   parentId={comment.id}
                                 />
                               </div>
