@@ -2,25 +2,16 @@
 module.exports = {
   darkMode: ["class"],
   content: [
-    "app/**/*.{ts,tsx}",
-    "components/**/*.{ts,tsx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
-      "*.{js,ts,jsx,tsx,mdx}"
-],
+    "*.{js,ts,jsx,tsx,mdx}",
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+  ],
   theme: {
     extend: {
       colors: {
-        dark: {
-          100: "#2A2A2A",
-          200: "#252525",
-          300: "#202020",
-          400: "#1A1A1A",
-          500: "#151515",
-          600: "#101010",
-          900: "#0A0A0A",
-        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -54,20 +45,6 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-      },
-      keyframes: {
-        "matrix-fade": {
-          "0%, 100%": { opacity: 0 },
-          "50%": { opacity: 1 },
-        },
-        click: {
-          "0%, 100%": { transform: "scale(1)" },
-          "50%": { transform: "scale(0.95)" },
-        },
-      },
-      animation: {
-        matrix: "matrix-fade 0.5s ease-in-out infinite",
-        click: "click 0.3s ease-in-out",
       },
       borderRadius: {
         lg: "var(--radius)",
