@@ -1,189 +1,262 @@
-import Link from "next/link"
-import { redirect } from "next/navigation"
-import { createClientClient } from "@/lib/supabase/client"
-import { getAllProfiles } from "@/lib/services/profile-service"
-import { getProducts } from "@/lib/services/product-service"
-import { getAllOrders } from "@/lib/services/order-service"
+"use client"
 
-export const dynamic = "force-dynamic"
+import { useEffect, useState } from "react"
+import { useAuth } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  LayoutDashboard,
+  Users,
+  ShoppingBag,
+  BarChart3,
+  Settings,
+  AlertCircle,
+  TrendingUp,
+  MessageSquare,
+  UserPlus,
+} from "lucide-react"
+import { AdminSalesChart } from "@/components/admin/admin-sales-chart"
+import { AdminUsersList } from "@/components/admin/admin-users-list"
+import { AdminProductsList } from "@/components/admin/admin-products-list"
+import { AdminForumStats } from "@/components/admin/admin-forum-stats"
 
-export default async function AdminDashboardPage() {
-  // Check if user is authenticated and is an admin
-  const supabase = createClientClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+export default function AdminDashboardPage() {
+  const { isLoaded, userId, isSignedIn } = useAuth()
+  const router = useRouter()
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  if (!user) {
-    redirect("/login")
+  useEffect(() => {
+    if (isLoaded) {
+      // In a real app, you would check if the user has admin permissions
+      // by querying your database or Clerk's metadata
+      const checkAdminStatus = async () => {
+        try {
+          // Simulate API call to check admin status
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+
+          // For demo purposes, we'll just set isAdmin to true
+          // In a real app, this would be based on the user's role
+          setIsAdmin(true)
+          setIsLoading(false)
+        } catch (error) {
+          console.error("Error checking admin status:", error)
+          setIsAdmin(false)
+          setIsLoading(false)
+        }
+      }
+
+      if (isSignedIn) {
+        checkAdminStatus()
+      } else {
+        setIsLoading(false)
+      }
+    }
+  }, [isLoaded, isSignedIn, userId])
+
+  // Redirect if not signed in or not an admin
+  useEffect(() => {
+    if (isLoaded && !isLoading) {
+      if (!isSignedIn) {
+        router.push("/sign-in?redirect=/admin")
+      } else if (!isAdmin) {
+        router.push("/")
+      }
+    }
+  }, [isLoaded, isLoading, isSignedIn, isAdmin, router])
+
+  if (isLoading || !isAdmin) {
+    return (
+      <div className="flex min-h-screen items-center justify-center pt-24">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+      </div>
+    )
   }
-
-  // Get the user's profile to check if they're an admin
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-  if (!profile || profile.role !== "admin") {
-    redirect("/")
-  }
-
-  // Fetch dashboard data
-  const profiles = await getAllProfiles()
-  const products = await getProducts()
-  const orders = await getAllOrders()
-
-  // Calculate some stats
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0)
-  const pendingOrders = orders.filter((order) => order.status === "pending").length
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+    <main className="flex min-h-screen flex-col pt-24">
+      <div className="container mx-auto px-4 py-12">
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Sidebar */}
+          <div className="w-full md:w-64 bg-dark-800 rounded-lg p-4">
+            <h2 className="text-xl font-bold text-white mb-6">Admin Panel</h2>
+            <nav className="space-y-2">
+              <Button variant="ghost" className="w-full justify-start" asChild>
+                <a href="#dashboard">
+                  <LayoutDashboard className="mr-2 h-5 w-5" />
+                  Dashboard
+                </a>
+              </Button>
+              <Button variant="ghost" className="w-full justify-start" asChild>
+                <a href="#users">
+                  <Users className="mr-2 h-5 w-5" />
+                  Users
+                </a>
+              </Button>
+              <Button variant="ghost" className="w-full justify-start" asChild>
+                <a href="#products">
+                  <ShoppingBag className="mr-2 h-5 w-5" />
+                  Products
+                </a>
+              </Button>
+              <Button variant="ghost" className="w-full justify-start" asChild>
+                <a href="#analytics">
+                  <BarChart3 className="mr-2 h-5 w-5" />
+                  Analytics
+                </a>
+              </Button>
+              <Button variant="ghost" className="w-full justify-start" asChild>
+                <a href="#forum">
+                  <MessageSquare className="mr-2 h-5 w-5" />
+                  Forum
+                </a>
+              </Button>
+              <Button variant="ghost" className="w-full justify-start" asChild>
+                <a href="#settings">
+                  <Settings className="mr-2 h-5 w-5" />
+                  Settings
+                </a>
+              </Button>
+            </nav>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-2">Total Users</h2>
-          <p className="text-3xl font-bold">{profiles.length}</p>
-        </div>
+            <div className="mt-8 pt-4 border-t border-dark-600">
+              <Button variant="outline" className="w-full">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Invite Team Member
+              </Button>
+            </div>
+          </div>
 
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-2">Total Products</h2>
-          <p className="text-3xl font-bold">{products.length}</p>
-        </div>
+          {/* Main Content */}
+          <div className="flex-grow">
+            <h1 className="text-3xl font-bold text-white mb-8">Dashboard</h1>
 
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-2">Total Orders</h2>
-          <p className="text-3xl font-bold">{orders.length}</p>
-        </div>
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="bg-dark-800 rounded-lg p-4">
+                <p className="text-gray-400 text-sm">Total Sales</p>
+                <p className="text-2xl font-bold text-white">$12,426.50</p>
+                <div className="flex items-center text-green-500 text-sm mt-2">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  <span>+12.5% from last month</span>
+                </div>
+              </div>
 
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-2">Total Revenue</h2>
-          <p className="text-3xl font-bold">${totalRevenue.toFixed(2)}</p>
+              <div className="bg-dark-800 rounded-lg p-4">
+                <p className="text-gray-400 text-sm">Active Users</p>
+                <p className="text-2xl font-bold text-white">1,245</p>
+                <div className="flex items-center text-green-500 text-sm mt-2">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  <span>+8.2% from last month</span>
+                </div>
+              </div>
+
+              <div className="bg-dark-800 rounded-lg p-4">
+                <p className="text-gray-400 text-sm">Forum Posts</p>
+                <p className="text-2xl font-bold text-white">342</p>
+                <div className="flex items-center text-green-500 text-sm mt-2">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  <span>+15.7% from last month</span>
+                </div>
+              </div>
+
+              <div className="bg-dark-800 rounded-lg p-4">
+                <p className="text-gray-400 text-sm">Conversion Rate</p>
+                <p className="text-2xl font-bold text-white">3.2%</p>
+                <div className="flex items-center text-red-500 text-sm mt-2">
+                  <TrendingUp className="h-4 w-4 mr-1 transform rotate-180" />
+                  <span>-0.5% from last month</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs for different sections */}
+            <Tabs defaultValue="sales" className="w-full">
+              <TabsList className="mb-6">
+                <TabsTrigger value="sales">Sales Overview</TabsTrigger>
+                <TabsTrigger value="users">User Management</TabsTrigger>
+                <TabsTrigger value="products">Products</TabsTrigger>
+                <TabsTrigger value="forum">Forum Activity</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="sales">
+                <div className="bg-dark-800 rounded-lg p-6">
+                  <h3 className="text-xl font-bold text-white mb-4">Sales Overview</h3>
+                  <AdminSalesChart />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="users">
+                <div className="bg-dark-800 rounded-lg p-6">
+                  <h3 className="text-xl font-bold text-white mb-4">User Management</h3>
+                  <AdminUsersList />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="products">
+                <div className="bg-dark-800 rounded-lg p-6">
+                  <h3 className="text-xl font-bold text-white mb-4">Products</h3>
+                  <AdminProductsList />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="forum">
+                <div className="bg-dark-800 rounded-lg p-6">
+                  <h3 className="text-xl font-bold text-white mb-4">Forum Activity</h3>
+                  <AdminForumStats />
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            {/* Recent Activity */}
+            <div className="mt-8 bg-dark-800 rounded-lg p-6">
+              <h3 className="text-xl font-bold text-white mb-4">Recent Activity</h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-4 pb-4 border-b border-dark-600">
+                  <div className="bg-dark-700 p-2 rounded-full">
+                    <ShoppingBag className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-white">New order #12345 has been placed</p>
+                    <p className="text-sm text-gray-400">2 hours ago</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 pb-4 border-b border-dark-600">
+                  <div className="bg-dark-700 p-2 rounded-full">
+                    <Users className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <p className="text-white">New user John Doe has registered</p>
+                    <p className="text-sm text-gray-400">5 hours ago</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 pb-4 border-b border-dark-600">
+                  <div className="bg-dark-700 p-2 rounded-full">
+                    <MessageSquare className="h-5 w-5 text-purple-500" />
+                  </div>
+                  <div>
+                    <p className="text-white">New forum thread "Investment Strategies" has been created</p>
+                    <p className="text-sm text-gray-400">Yesterday</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="bg-dark-700 p-2 rounded-full">
+                    <AlertCircle className="h-5 w-5 text-yellow-500" />
+                  </div>
+                  <div>
+                    <p className="text-white">System update scheduled for next week</p>
+                    <p className="text-sm text-gray-400">2 days ago</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Recent Orders</h2>
-            <Link href="/admin/orders" className="text-blue-600 hover:underline">
-              View All
-            </Link>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="py-2 text-left">Order ID</th>
-                  <th className="py-2 text-left">Customer</th>
-                  <th className="py-2 text-left">Status</th>
-                  <th className="py-2 text-left">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.slice(0, 5).map((order) => (
-                  <tr key={order.id} className="border-b">
-                    <td className="py-2">
-                      <Link href={`/admin/orders/${order.id}`} className="text-blue-600 hover:underline">
-                        {order.id.slice(0, 8)}...
-                      </Link>
-                    </td>
-                    <td className="py-2">{order.profiles?.full_name || "Unknown"}</td>
-                    <td className="py-2">
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          order.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : order.status === "processing"
-                              ? "bg-blue-100 text-blue-800"
-                              : order.status === "cancelled"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="py-2">${order.total.toFixed(2)}</td>
-                  </tr>
-                ))}
-
-                {orders.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="py-4 text-center text-gray-500">
-                      No orders found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Recent Products</h2>
-            <Link href="/admin/products" className="text-blue-600 hover:underline">
-              View All
-            </Link>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="py-2 text-left">Product</th>
-                  <th className="py-2 text-left">Price</th>
-                  <th className="py-2 text-left">Inventory</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.slice(0, 5).map((product) => (
-                  <tr key={product.id} className="border-b">
-                    <td className="py-2">
-                      <Link href={`/admin/products/${product.id}`} className="text-blue-600 hover:underline">
-                        {product.name}
-                      </Link>
-                    </td>
-                    <td className="py-2">${product.price.toFixed(2)}</td>
-                    <td className="py-2">{product.inventory_count}</td>
-                  </tr>
-                ))}
-
-                {products.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="py-4 text-center text-gray-500">
-                      No products found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link
-          href="/admin/products/new"
-          className="bg-blue-600 text-white p-4 rounded-lg text-center hover:bg-blue-700"
-        >
-          Add New Product
-        </Link>
-
-        <Link
-          href="/admin/categories/new"
-          className="bg-green-600 text-white p-4 rounded-lg text-center hover:bg-green-700"
-        >
-          Add New Category
-        </Link>
-
-        <Link
-          href="/admin/orders?status=pending"
-          className="bg-yellow-600 text-white p-4 rounded-lg text-center hover:bg-yellow-700"
-        >
-          View Pending Orders ({pendingOrders})
-        </Link>
-      </div>
-    </div>
+    </main>
   )
 }
