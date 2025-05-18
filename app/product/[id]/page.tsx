@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/context/cart-context"
 import { ChevronRight, ShoppingCart, Heart, Share2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import { ProductZoom } from "@/components/product/product-zoom"
-import { ReviewSystem } from "@/components/product/review-system"
-import { products, getRelatedProducts } from "@/lib/data/products"
+import { products } from "@/lib/data/products"
 
 export default function ProductPage() {
   const params = useParams()
@@ -33,7 +32,7 @@ export default function ProductPage() {
         if (foundProduct) {
           setProduct(foundProduct)
           // Get related products
-          const related = getRelatedProducts(foundProduct, 3)
+          const related = products.filter((p) => p.type === foundProduct.type && p.id !== foundProduct.id).slice(0, 3)
           setRelatedProducts(related)
         }
       } catch (error) {
@@ -106,9 +105,14 @@ export default function ProductPage() {
 
         {/* Product Details */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
-          {/* Product Image with Zoom */}
-          <div>
-            <ProductZoom images={productImages} productName={product.name} />
+          {/* Product Image */}
+          <div className="relative aspect-square bg-dark-800 rounded-lg overflow-hidden">
+            <Image
+              src={product.image1 || "/placeholder.svg?height=600&width=600"}
+              alt={product.name}
+              fill
+              className="object-cover"
+            />
           </div>
 
           {/* Product Info */}
@@ -210,7 +214,10 @@ export default function ProductPage() {
 
         {/* Reviews Section */}
         <div className="mb-16">
-          <ReviewSystem productId={params.id.toString()} />
+          <h2 className="text-2xl font-bold text-white mb-6">Customer Reviews</h2>
+          <div className="bg-dark-800 rounded-lg p-6">
+            <p className="text-gray-400 text-center">Reviews coming soon</p>
+          </div>
         </div>
 
         {/* Related Products */}
@@ -222,10 +229,11 @@ export default function ProductPage() {
                 <Link href={`/product/${relatedProduct.id}`} key={relatedProduct.id}>
                   <div className="bg-dark-800 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="relative aspect-video">
-                      <img
-                        src={relatedProduct.image1 || "/placeholder.svg"}
+                      <Image
+                        src={relatedProduct.image1 || "/placeholder.svg?height=300&width=500"}
                         alt={relatedProduct.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     </div>
                     <div className="p-4">

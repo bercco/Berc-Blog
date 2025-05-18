@@ -25,12 +25,12 @@ import { useMetamask } from "@/hooks/use-metamask"
 import { useToast } from "@/components/ui/use-toast"
 import { CommentBox } from "@/components/forum/comment-box"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { forumThreads, initialComments, organizeComments } from "@/lib/data/forum"
+import { forumThreads, initialComments, organizeComments, forumCategories } from "@/lib/data/forum"
 
 export default function ThreadPage() {
   const params = useParams()
   const router = useRouter()
-  const threadId = params.id as string
+  const threadId = params.id
   const { userId } = useAuth()
   const { isConnected } = useMetamask()
   const { toast } = useToast()
@@ -61,7 +61,19 @@ export default function ThreadPage() {
       const foundThread = forumThreads.find((t) => t.id.toString() === threadId)
 
       if (foundThread) {
-        setThread(foundThread)
+        // Find category
+        const category = forumCategories.find((c) => c.id === foundThread.category_id)
+
+        // Enhance thread with category info
+        const enhancedThread = {
+          ...foundThread,
+          category: {
+            name: category?.name || "Unknown",
+            slug: category?.slug || "unknown",
+          },
+        }
+
+        setThread(enhancedThread)
         fetchComments()
       } else {
         toast({
