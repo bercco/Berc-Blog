@@ -68,18 +68,20 @@ export default function DatabaseAdminPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 pt-24">
-      <h1 className="text-3xl font-bold text-white mb-8">Database Management</h1>
+    <div className="container mx-auto px-4 py-12">
+      <h1 className="text-3xl font-bold mb-8">Database Management</h1>
 
       <SupabaseStatus />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-dark-800 rounded-lg p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md">
           <div className="flex items-center mb-4">
             <Database className="h-6 w-6 text-blue-500 mr-2" />
-            <h2 className="text-xl font-bold text-white">Initialize Schema</h2>
+            <h2 className="text-xl font-bold">Initialize Schema</h2>
           </div>
-          <p className="text-gray-400 mb-4">Create the necessary database tables and functions for the application.</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
+            Create the necessary database tables and functions for the application.
+          </p>
           <Button onClick={initializeSchema} disabled={isInitializing} className="w-full">
             {isInitializing ? (
               <>
@@ -95,12 +97,14 @@ export default function DatabaseAdminPage() {
           </Button>
         </div>
 
-        <div className="bg-dark-800 rounded-lg p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md">
           <div className="flex items-center mb-4">
             <Plus className="h-6 w-6 text-green-500 mr-2" />
-            <h2 className="text-xl font-bold text-white">Add Sample Data</h2>
+            <h2 className="text-xl font-bold">Add Sample Data</h2>
           </div>
-          <p className="text-gray-400 mb-4">Populate the database with sample products, reviews, and forum posts.</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
+            Populate the database with sample products, reviews, and forum posts.
+          </p>
           <Button onClick={addSampleData} disabled={isAddingSampleData} className="w-full">
             {isAddingSampleData ? (
               <>

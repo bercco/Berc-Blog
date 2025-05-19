@@ -15,7 +15,7 @@ export function SupabaseStatus() {
       setIsChecking(true)
 
       // Try to query the Supabase database
-      const { data, error } = await supabase.from("product_reviews").select("count").limit(1)
+      const { data, error } = await supabase.from("products").select("count").limit(1)
 
       if (error) {
         console.error("Supabase connection error:", error)
@@ -50,7 +50,7 @@ export function SupabaseStatus() {
   }, [])
 
   return (
-    <div className="bg-dark-800 rounded-lg p-4 mb-4">
+    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <div
@@ -58,7 +58,7 @@ export function SupabaseStatus() {
               isConnected === null ? "bg-gray-500" : isConnected ? "bg-green-500" : "bg-red-500"
             }`}
           ></div>
-          <span className="text-white">
+          <span>
             {isConnected === null
               ? "Checking Supabase connection..."
               : isConnected

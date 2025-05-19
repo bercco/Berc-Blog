@@ -16,6 +16,31 @@ export async function POST() {
 
     console.log("Initializing Supabase schema...")
 
+    // Create products table if it doesn't exist
+    const { error: productsTableError } = await supabaseAdmin.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        price DECIMAL(10, 2) NOT NULL,
+        description TEXT,
+        image1 TEXT,
+        image2 TEXT,
+        category TEXT,
+        type TEXT,
+        rating DECIMAL(3, 2) DEFAULT 0,
+        reviews_count INTEGER DEFAULT 0,
+        inventory_quantity INTEGER DEFAULT 0,
+        is_featured BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `)
+
+    if (productsTableError) {
+      console.error("Error creating products table:", productsTableError)
+      return NextResponse.json({ error: "Failed to create products table" }, { status: 500 })
+    }
+
     // Create product_reviews table
     const { error: reviewsTableError } = await supabaseAdmin.query(`
       CREATE TABLE IF NOT EXISTS product_reviews (
@@ -95,27 +120,59 @@ export async function POST() {
       return NextResponse.json({ error: "Failed to create forum_comments table" }, { status: 500 })
     }
 
+    // Create support_messages table
+    const { error: messagesTableError } = await supabaseAdmin.query(`
+      CREATE TABLE IF NOT EXISTS support_messages (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        content_hash TEXT NOT NULL,
+        content_preview TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'open',
+        priority TEXT NOT NULL DEFAULT 'normal',
+        category TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `)
+
+    if (messagesTableError) {
+      console.error("Error creating support_messages table:", messagesTableError)
+      return NextResponse.json({ error: "Failed to create support_messages table" }, { status: 500 })
+    }
+
+    // Create support_message_responses table
+    const { error: responsesTableError } = await supabaseAdmin.query(`
+      CREATE TABLE IF NOT EXISTS support_message_responses (
+        id SERIAL PRIMARY KEY,
+        message_id INTEGER REFERENCES support_messages(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL,
+        content_hash TEXT NOT NULL,
+        is_internal BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `)
+
+    if (responsesTableError) {
+      console.error("Error creating support_message_responses table:", responsesTableError)
+      return NextResponse.json({ error: "Failed to create support_message_responses table" }, { status: 500 })
+    }
+
     // Create stored procedures
     const { error: proceduresError } = await supabaseAdmin.query(`
-      -- Create function to increment a value
-      CREATE OR REPLACE FUNCTION increment(row_id integer)
-      RETURNS integer AS $$
-      DECLARE
-        current_value integer;
+      -- Create function to increment likes
+      CREATE OR REPLACE FUNCTION increment_likes(table_name text, row_id integer)
+      RETURNS void AS $$
       BEGIN
-        SELECT likes INTO current_value FROM product_reviews WHERE id = row_id;
-        RETURN current_value + 1;
+        EXECUTE format('UPDATE %I SET likes = likes + 1 WHERE id = %L', table_name, row_id);
       END;
       $$ LANGUAGE plpgsql;
 
-      -- Create function to decrement a value
-      CREATE OR REPLACE FUNCTION decrement(row_id integer)
-      RETURNS integer AS $$
-      DECLARE
-        current_value integer;
+      -- Create function to decrement likes
+      CREATE OR REPLACE FUNCTION decrement_likes(table_name text, row_id integer)
+      RETURNS void AS $$
       BEGIN
-        SELECT likes INTO current_value FROM product_reviews WHERE id = row_id;
-        RETURN GREATEST(0, current_value - 1);
+        EXECUTE format('UPDATE %I SET likes = GREATEST(0, likes - 1) WHERE id = %L', table_name, row_id);
       END;
       $$ LANGUAGE plpgsql;
     `)

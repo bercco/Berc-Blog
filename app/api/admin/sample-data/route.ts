@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { supabaseAdmin } from "@/lib/supabase/admin-client"
 import { products } from "@/lib/data/products"
+import { hashMessage } from "@/lib/utils/hash"
 
 export async function POST() {
   try {
@@ -71,34 +72,71 @@ export async function POST() {
     ]
 
     for (const review of sampleReviews) {
-      const { error: reviewError } = await supabaseAdmin.from("product_reviews").insert(review)
+      // Check if review already exists
+      const { data: existingReview } = await supabaseAdmin
+        .from("product_reviews")
+        .select("id")
+        .eq("product_id", review.product_id)
+        .eq("user_id", review.user_id)
+        .single()
 
-      if (reviewError) {
-        console.error(`Error adding review for product ${review.product_id}:`, reviewError)
+      if (!existingReview) {
+        const { error: reviewError } = await supabaseAdmin.from("product_reviews").insert(review)
+
+        if (reviewError) {
+          console.error(`Error adding review for product ${review.product_id}:`, reviewError)
+        }
       }
     }
 
-    // Update product ratings based on reviews
-    for (const product of products.slice(0, 3)) {
-      const { data: reviews } = await supabaseAdmin
-        .from("product_reviews")
-        .select("rating")
-        .eq("product_id", product.id)
+    // Add sample support messages
+    const sampleMessages = [
+      {
+        user_id: userId,
+        subject: "Question about shipping",
+        content: "When will my order be shipped? I placed it 3 days ago.",
+        status: "open",
+        priority: "normal",
+        category: "shipping",
+      },
+      {
+        user_id: userId,
+        subject: "Product defect",
+        content: "I received a damaged product. What should I do?",
+        status: "open",
+        priority: "high",
+        category: "returns",
+      },
+      {
+        user_id: userId,
+        subject: "Payment issue",
+        content: "I was charged twice for my order. Please help!",
+        status: "open",
+        priority: "urgent",
+        category: "billing",
+      },
+    ]
 
-      if (reviews && reviews.length > 0) {
-        const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+    for (const message of sampleMessages) {
+      // Hash the message content
+      const contentHash = await hashMessage(message.content)
 
-        const { error: updateError } = await supabaseAdmin
-          .from("products")
-          .update({
-            rating: averageRating,
-            reviews_count: reviews.length,
-          })
-          .eq("id", product.id)
+      // Create a preview of the content
+      const contentPreview = message.content.length > 50 ? `${message.content.substring(0, 50)}...` : message.content
 
-        if (updateError) {
-          console.error(`Error updating product ${product.id} rating:`, updateError)
-        }
+      // Insert the message
+      const { error: messageError } = await supabaseAdmin.from("support_messages").insert({
+        user_id: message.user_id,
+        subject: message.subject,
+        content_hash: contentHash,
+        content_preview: contentPreview,
+        status: message.status,
+        priority: message.priority,
+        category: message.category,
+      })
+
+      if (messageError) {
+        console.error(`Error adding support message:`, messageError)
       }
     }
 

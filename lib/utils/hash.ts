@@ -1,26 +1,19 @@
-import crypto from "crypto"
+import CryptoJS from "crypto-js"
 
-/**
- * Creates a SHA-1 hash of the provided text
- */
-export function sha1Hash(text: string): string {
-  return crypto.createHash("sha1").update(text).digest("hex")
+// Function to hash a message using SHA-1
+export async function hashMessage(message: string): Promise<string> {
+  return CryptoJS.SHA1(message).toString()
 }
 
-/**
- * Creates a preview of the message (first 50 characters)
- */
-export function createMessagePreview(text: string, maxLength = 50): string {
-  if (text.length <= maxLength) return text
-  return text.substring(0, maxLength) + "..."
+// Function to verify a message against a hash
+export async function verifyMessage(message: string, hash: string): Promise<boolean> {
+  const messageHash = await hashMessage(message)
+  return messageHash === hash
 }
 
-/**
- * Stores a message securely by hashing it and creating a preview
- */
-export function secureMessage(text: string) {
-  return {
-    hash: sha1Hash(text),
-    preview: createMessagePreview(text),
-  }
+// Function to store a message securely
+export async function storeMessage(message: string): Promise<{ hash: string; preview: string }> {
+  const hash = await hashMessage(message)
+  const preview = message.length > 50 ? `${message.substring(0, 50)}...` : message
+  return { hash, preview }
 }
