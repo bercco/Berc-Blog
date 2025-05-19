@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
-import { syncStripeProducts, getStripeIds } from "@/lib/data/stripe-products"
+import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { syncStripeProducts, updateCartItemsWithStripeIds } from "@/lib/data/stripe-products"
 
 export type ProductType = "Software" | "Course" | "Book" | "Electronics" | "Clothing" | "Investment" | "Other"
 
@@ -17,6 +17,8 @@ export interface Product {
   description?: string
   rating?: number
   reviews?: number
+  inventory_quantity?: number
+  is_featured?: boolean
 }
 
 export interface CartItem extends Product {
@@ -36,6 +38,7 @@ interface CartContextType {
   totalItems: number
   totalPrice: number
   isStripeReady: boolean
+  refreshStripeIds: () => Promise<void>
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -46,6 +49,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [totalItems, setTotalItems] = useState(0)
   const [totalPrice, setTotalPrice] = useState(0)
   const [isStripeReady, setIsStripeReady] = useState(false)
+
+  // Function to refresh Stripe IDs for all cart items
+  const refreshStripeIds = useCallback(async () => {
+    const success = await syncStripeProducts()
+    if (success) {
+      setCartItems((prevItems) => {
+        const updatedItems = updateCartItemsWithStripeIds(prevItems)
+        return updatedItems
+      })
+      setIsStripeReady(true)
+    }
+  }, [])
 
   // Load cart from localStorage on initial render
   useEffect(() => {
@@ -59,10 +74,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Sync Stripe products
-    syncStripeProducts()
-      .then(() => setIsStripeReady(true))
-      .catch((error) => console.error("Failed to sync Stripe products:", error))
-  }, [])
+    refreshStripeIds()
+  }, [refreshStripeIds])
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
@@ -74,58 +87,50 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     setTotalItems(items)
     setTotalPrice(price)
+
+    // Log cart items with Stripe IDs for debugging
+    console.log("Cart items with Stripe IDs:", cartItems)
   }, [cartItems])
 
-  const addToCart = (product: Product) => {
+  const addToCart = useCallback((product: Product) => {
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === product.id)
 
-      // Get Stripe IDs for the product
-      const stripeIds = getStripeIds(product.id)
-
+      let updatedItems
       if (existingItem) {
         // Increment quantity if item already exists
-        return prevItems.map((item) =>
-          item.id === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + 1,
-                stripeProductId: stripeIds?.productId || item.stripeProductId,
-                stripePriceId: stripeIds?.priceId || item.stripePriceId,
-              }
-            : item,
+        updatedItems = prevItems.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
         )
       } else {
         // Add new item with quantity 1
-        return [
-          ...prevItems,
-          {
-            ...product,
-            quantity: 1,
-            stripeProductId: stripeIds?.productId,
-            stripePriceId: stripeIds?.priceId,
-          },
-        ]
+        updatedItems = [...prevItems, { ...product, quantity: 1 }]
       }
+
+      // Update with Stripe IDs
+      return updateCartItemsWithStripeIds(updatedItems)
     })
-  }
+  }, [])
 
-  const removeFromCart = (productId: number) => {
+  const removeFromCart = useCallback((productId: number) => {
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId))
-  }
+  }, [])
 
-  const updateQuantity = (productId: number, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId)
-      return
-    }
+  const updateQuantity = useCallback(
+    (productId: number, quantity: number) => {
+      if (quantity <= 0) {
+        removeFromCart(productId)
+        return
+      }
 
-    setCartItems((prevItems) => prevItems.map((item) => (item.id === productId ? { ...item, quantity } : item)))
-  }
+      setCartItems((prevItems) => prevItems.map((item) => (item.id === productId ? { ...item, quantity } : item)))
+    },
+    [removeFromCart],
+  )
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCartItems([])
-  }
+  }, [])
 
   return (
     <CartContext.Provider
@@ -140,6 +145,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         totalItems,
         totalPrice,
         isStripeReady,
+        refreshStripeIds,
       }}
     >
       {children}
