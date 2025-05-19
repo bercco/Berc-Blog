@@ -1,7 +1,9 @@
 "use client"
 
-import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs"
+import { SignUpButton, useAuth } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
+import { AuthModal } from "@/components/auth/auth-modal"
+import { motion } from "framer-motion"
 
 export function AuthButtons() {
   const { isSignedIn } = useAuth()
@@ -12,13 +14,11 @@ export function AuthButtons() {
 
   return (
     <div className="flex gap-2">
-      <SignInButton mode="modal">
-        <Button variant="ghost" size="sm">
-          Sign In
-        </Button>
-      </SignInButton>
+      <AuthModal />
       <SignUpButton mode="modal">
-        <Button size="sm">Sign Up</Button>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ duration: 0.2 }}>
+          <Button size="sm">Sign Up</Button>
+        </motion.div>
       </SignUpButton>
     </div>
   )

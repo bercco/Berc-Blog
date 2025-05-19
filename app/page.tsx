@@ -70,7 +70,7 @@ export default function Home() {
 
   return (
     <SplitLayout>
-      <main className="flex min-h-screen flex-col items-center justify-between pt-16">
+      <main className="flex min-h-screen flex-col items-center justify-between pt-2">
         {/* Full-screen Auto-sliding Banner */}
         <AutoSliderBanner />
 
