@@ -17,6 +17,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ error: "Invalid review ID" }, { status: 400 })
     }
 
+    console.log(`Processing like for review ID: ${reviewId}, user ID: ${userId}`)
+
     // Check if the review exists
     const { data: review, error: reviewError } = await supabase
       .from("product_reviews")
@@ -25,6 +27,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       .single()
 
     if (reviewError || !review) {
+      console.error("Review not found:", reviewError)
       return NextResponse.json({ error: "Review not found" }, { status: 404 })
     }
 
@@ -37,13 +40,20 @@ export async function POST(request: Request, { params }: { params: { id: string 
       .single()
 
     if (existingLike) {
+      console.log(`User has already liked this review. Unliking...`)
+
       // User has already liked this review, so unlike it
       await supabase.from("product_review_likes").delete().eq("id", existingLike.id)
 
       // Decrement the likes count
-      await supabase.rpc("decrement_review_likes", {
-        p_review_id: reviewId,
-      })
+      const { error: updateError } = await supabase
+        .from("product_reviews")
+        .update({ likes: supabase.rpc("decrement", { row_id: reviewId }) })
+        .eq("id", reviewId)
+
+      if (updateError) {
+        console.error("Error decrementing likes:", updateError)
+      }
 
       return NextResponse.json({
         success: true,
@@ -51,6 +61,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
         message: "Review unliked successfully",
       })
     } else {
+      console.log(`User has not liked this review yet. Liking...`)
+
       // User hasn't liked this review yet, so like it
       await supabase.from("product_review_likes").insert({
         review_id: reviewId,
@@ -58,9 +70,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
       })
 
       // Increment the likes count
-      await supabase.rpc("increment_review_likes", {
-        p_review_id: reviewId,
-      })
+      const { error: updateError } = await supabase
+        .from("product_reviews")
+        .update({ likes: supabase.rpc("increment", { row_id: reviewId }) })
+        .eq("id", reviewId)
+
+      if (updateError) {
+        console.error("Error incrementing likes:", updateError)
+      }
 
       return NextResponse.json({
         success: true,

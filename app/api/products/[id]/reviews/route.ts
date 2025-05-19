@@ -17,6 +17,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: "Invalid product ID" }, { status: 400 })
     }
 
+    console.log(`Fetching reviews for product ID: ${productId}`)
+
     // Get reviews from Supabase
     const { data: reviews, error } = await supabase
       .from("product_reviews")
@@ -39,6 +41,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: "Failed to fetch reviews" }, { status: 500 })
     }
 
+    console.log(`Found ${reviews?.length || 0} reviews`)
+
     // Get the product's overall rating and review count
     const { data: product, error: productError } = await supabase
       .from("products")
@@ -48,6 +52,31 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     if (productError) {
       console.error("Error fetching product:", productError)
+    }
+
+    // Get the current user's likes
+    const { userId } = auth()
+    let userLikes = []
+
+    if (userId && reviews?.length > 0) {
+      const reviewIds = reviews.map((review) => review.id)
+
+      const { data: likes, error: likesError } = await supabase
+        .from("product_review_likes")
+        .select("review_id")
+        .eq("user_id", userId)
+        .in("review_id", reviewIds)
+
+      if (likesError) {
+        console.error("Error fetching user likes:", likesError)
+      } else {
+        userLikes = likes || []
+      }
+
+      // Mark reviews that the user has liked
+      reviews.forEach((review) => {
+        review.isLiked = userLikes.some((like) => like.review_id === review.id)
+      })
     }
 
     return NextResponse.json({
@@ -90,6 +119,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
     const { rating, comment } = validationResult.data
 
+    console.log(`Adding/updating review for product ID: ${productId}, user ID: ${userId}`)
+
     // Check if user has already reviewed this product
     const { data: existingReview } = await supabase
       .from("product_reviews")
@@ -99,6 +130,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
       .single()
 
     if (existingReview) {
+      console.log(`Updating existing review ID: ${existingReview.id}`)
+
       // Update existing review
       const { data: updatedReview, error } = await supabase
         .from("product_reviews")
@@ -122,6 +155,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
         message: "Review updated successfully",
       })
     }
+
+    console.log("Creating new review")
 
     // Check if user has purchased the product (for verified purchase badge)
     // This is a simplified check - in a real app, you'd check order history

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useCart } from "@/context/cart-context"
 import { ChevronRight, ShoppingCart, Heart, Share2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
+import { ReviewSystem } from "@/components/product/review-system"
 import { products } from "@/lib/data/products"
 
 export default function ProductPage() {
@@ -78,10 +79,6 @@ export default function ProductPage() {
       </div>
     )
   }
-
-  // Prepare images for zoom component
-  const productImages = [product.image1]
-  if (product.image2) productImages.push(product.image2)
 
   return (
     <main className="flex min-h-screen flex-col pt-24">
@@ -214,10 +211,7 @@ export default function ProductPage() {
 
         {/* Reviews Section */}
         <div className="mb-16">
-          <h2 className="text-2xl font-bold text-white mb-6">Customer Reviews</h2>
-          <div className="bg-dark-800 rounded-lg p-6">
-            <p className="text-gray-400 text-center">Reviews coming soon</p>
-          </div>
+          <ReviewSystem productId={params.id.toString()} />
         </div>
 
         {/* Related Products */}

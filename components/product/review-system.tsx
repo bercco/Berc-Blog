@@ -66,6 +66,7 @@ export function ReviewSystem({ productId }: ReviewSystemProps) {
       }
 
       const data = await response.json()
+      console.log("Fetched reviews:", data)
 
       setReviews(data.reviews || [])
       setOverallRating(data.rating || 0)
@@ -386,11 +387,11 @@ export function ReviewSystem({ productId }: ReviewSystemProps) {
             >
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center">
-                  {review.user_profiles.avatar_url ? (
+                  {review.user_profiles?.avatar_url ? (
                     <div className="relative w-10 h-10 rounded-full overflow-hidden mr-3">
                       <Image
-                        src={review.user_profiles.avatar_url || "/placeholder.svg"}
-                        alt={review.user_profiles.username}
+                        src={review.user_profiles.avatar_url || "/placeholder.svg?height=40&width=40"}
+                        alt={review.user_profiles.username || "User"}
                         fill
                         className="object-cover"
                       />
@@ -401,7 +402,7 @@ export function ReviewSystem({ productId }: ReviewSystemProps) {
                     </div>
                   )}
                   <div>
-                    <p className="font-medium text-white">{review.user_profiles.username}</p>
+                    <p className="font-medium text-white">{review.user_profiles?.username || "Anonymous User"}</p>
                     <p className="text-xs text-gray-400">
                       {formatDistanceToNow(new Date(review.created_at))} ago
                       {review.created_at !== review.updated_at && <span className="ml-2">(edited)</span>}
