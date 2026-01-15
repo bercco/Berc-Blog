@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useTheme } from "next-themes"
-import { Button } from "@heroui/react"
+import { Button } from "@/components/ui/button"
 import { Moon, Sun, Rss, Github } from "lucide-react"
 import { useEffect, useState } from "react"
 
@@ -25,47 +25,25 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <Button
-            as={Link}
-            href="/tags"
-            variant="light"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            Tags
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/tags">Tags</Link>
           </Button>
-          <Button
-            as="a"
-            href="/rss.xml"
-            variant="light"
-            size="sm"
-            isIconOnly
-            aria-label="RSS Feed"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Rss className="w-4 h-4" />
+          <Button asChild variant="ghost" size="icon">
+            <a href="/rss.xml" aria-label="RSS Feed">
+              <Rss className="w-4 h-4" />
+            </a>
           </Button>
-          <Button
-            as="a"
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="light"
-            size="sm"
-            isIconOnly
-            aria-label="GitHub"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Github className="w-4 h-4" />
+          <Button asChild variant="ghost" size="icon">
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+              <Github className="w-4 h-4" />
+            </a>
           </Button>
           {mounted && (
             <Button
-              variant="light"
-              size="sm"
-              isIconOnly
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               aria-label="Toggle theme"
-              onPress={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="text-muted-foreground hover:text-foreground"
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>

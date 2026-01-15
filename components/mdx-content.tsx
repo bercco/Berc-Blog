@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { MDXRemote, type MDXRemoteSerializeResult } from "next-mdx-remote"
-import { Chip } from "@heroui/react"
+import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 
 const components = {
@@ -38,7 +38,7 @@ const components = {
     <img className="rounded-lg my-6" {...props} alt={props.alt || ""} />
   ),
   hr: () => <hr className="my-8 border-border" />,
-  Chip: (props: any) => <Chip {...props} />,
+  Badge: (props: any) => <Badge {...props} />,
   Link: (props: any) => <Link {...props} />,
 }
 

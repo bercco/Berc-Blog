@@ -1,4 +1,4 @@
-import { Button } from "@heroui/react"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Home } from "lucide-react"
 
@@ -10,8 +10,11 @@ export default function NotFound() {
       <p className="text-muted-foreground mb-8 text-center max-w-md">
         Aradığınız sayfa mevcut değil veya taşınmış olabilir.
       </p>
-      <Button as={Link} href="/" color="primary" startContent={<Home className="w-4 h-4" />}>
-        Ana Sayfaya Dön
+      <Button asChild>
+        <Link href="/">
+          <Home className="w-4 h-4 mr-2" />
+          Ana Sayfaya Dön
+        </Link>
       </Button>
     </div>
   )

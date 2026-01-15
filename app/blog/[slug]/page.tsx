@@ -2,7 +2,8 @@ import { notFound } from "next/navigation"
 import { getAllPosts, getPostBySlug } from "@/lib/posts"
 import { serialize } from "next-mdx-remote/serialize"
 import { MDXContent } from "@/components/mdx-content"
-import { Chip, Button } from "@heroui/react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Calendar, Clock, ArrowLeft } from "lucide-react"
 import type { Metadata } from "next"
@@ -61,15 +62,11 @@ export default async function BlogPage({ params }: Props) {
   return (
     <article className="max-w-3xl mx-auto px-6 py-12">
       {/* Back Button */}
-      <Button
-        as={Link}
-        href="/"
-        variant="light"
-        size="sm"
-        startContent={<ArrowLeft className="w-4 h-4" />}
-        className="mb-8 text-muted-foreground hover:text-foreground"
-      >
-        Tüm yazılar
+      <Button asChild variant="ghost" size="sm" className="mb-8">
+        <Link href="/">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Tüm yazılar
+        </Link>
       </Button>
 
       {/* Header */}
@@ -89,16 +86,14 @@ export default async function BlogPage({ params }: Props) {
 
         <div className="flex flex-wrap gap-2">
           {post.tags.map((tag) => (
-            <Chip
+            <Badge
               key={tag}
-              as={Link}
-              href={`/tags/${tag}`}
-              size="sm"
-              variant="flat"
-              className="bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+              variant="secondary"
+              asChild
+              className="hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
             >
-              {tag}
-            </Chip>
+              <Link href={`/tags/${tag}`}>{tag}</Link>
+            </Badge>
           ))}
         </div>
       </header>
@@ -115,14 +110,11 @@ export default async function BlogPage({ params }: Props) {
 
       {/* Footer */}
       <footer className="mt-12 pt-8 border-t border-border">
-        <Button
-          as={Link}
-          href="/"
-          variant="flat"
-          className="bg-secondary text-secondary-foreground"
-          startContent={<ArrowLeft className="w-4 h-4" />}
-        >
-          Diğer yazılara göz at
+        <Button asChild variant="secondary">
+          <Link href="/">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Diğer yazılara göz at
+          </Link>
         </Button>
       </footer>
     </article>

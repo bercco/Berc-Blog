@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { getAllTags, getPostsByTag } from "@/lib/posts"
 import { BlogCard } from "@/components/blog-card"
-import { Button } from "@heroui/react"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import type { Metadata } from "next"
@@ -36,15 +36,11 @@ export default async function TagPage({ params }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
-      <Button
-        as={Link}
-        href="/tags"
-        variant="light"
-        size="sm"
-        startContent={<ArrowLeft className="w-4 h-4" />}
-        className="mb-8 text-muted-foreground hover:text-foreground"
-      >
-        Tüm etiketler
+      <Button asChild variant="ghost" size="sm" className="mb-8">
+        <Link href="/tags">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Tüm etiketler
+        </Link>
       </Button>
 
       <h1 className="text-3xl font-bold mb-2">#{decodedTag}</h1>
