@@ -1,5 +1,6 @@
 import { getAllTags } from "@/lib/posts"
-import { Chip, Card, CardBody } from "@heroui/react"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 import type { Metadata } from "next"
 
@@ -21,23 +22,23 @@ export default function TagsPage() {
         </div>
       ) : (
         <Card className="bg-card border border-border/50">
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex flex-wrap gap-3">
               {tags.map(({ tag, count }) => (
-                <Chip
+                <Badge
                   key={tag}
-                  as={Link}
-                  href={`/tags/${tag}`}
-                  size="lg"
-                  variant="flat"
-                  className="bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                  asChild
+                  variant="secondary"
+                  className="hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer text-base px-4 py-2"
                 >
-                  {tag}
-                  <span className="ml-1 text-xs opacity-70">({count})</span>
-                </Chip>
+                  <Link href={`/tags/${tag}`}>
+                    {tag}
+                    <span className="ml-1 text-xs opacity-70">({count})</span>
+                  </Link>
+                </Badge>
               ))}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
     </div>
