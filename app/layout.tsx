@@ -1,31 +1,41 @@
-import "./globals.css"
+import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import type React from "react"
-import { SplashScreen } from "@/components/splash-screen"
-import { CustomCursor } from "@/components/custom-cursor"
+import { Analytics } from "@vercel/analytics/next"
+import { Providers } from "./providers"
 import { Navbar } from "@/components/navbar"
-import { CartProvider } from "@/context/cart-context"
-import { CartDrawer } from "@/components/cart-drawer"
-import { ClerkProvider } from "@clerk/nextjs"
-import { MetamaskProvider } from "@/hooks/use-metamask"
-import { Analytics } from "@vercel/analytics/react"
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import { Toaster } from "@/components/ui/toaster"
-import { Suspense } from "react"
-import { AIChatbot } from "@/components/ai-chatbot/ai-chatbot"
+import { Footer } from "@/components/footer"
+import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Data Fortress Ltd. - Investment Resources & E-Commerce",
-  description: "Premium investment resources, software, and e-commerce marketplace",
-  manifest: "/manifest.json",
-  icons: {
-    icon: "/icon.png",
-    apple: "/apple-icon.png",
+  title: {
+    default: "Berkay Blog",
+    template: "%s | Berkay Blog",
   },
-    generator: 'v0.dev'
+  description: "Tech, systems, future. Production-ready insights.",
+  keywords: ["blog", "tech", "web development", "AI", "systems"],
+  authors: [{ name: "Berkay" }],
+  creator: "Berkay",
+  openGraph: {
+    type: "website",
+    locale: "tr_TR",
+    url: "https://berkay.blog",
+    siteName: "Berkay Blog",
+    title: "Berkay Blog",
+    description: "Tech, systems, future.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Berkay Blog",
+    description: "Tech, systems, future.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+    generator: 'v0.app'
 }
 
 export default function RootLayout({
@@ -34,29 +44,16 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark scroll-smooth">
-      <body className={`${inter.className} bg-dark-900 text-gray-100`}>
-        <ClerkProvider>
-          <MetamaskProvider>
-            <CartProvider>
-              <Suspense fallback={<SplashScreen />}>
-                <Navbar />
-                {children}
-                <footer className="w-full py-6 px-4 bg-dark-600 text-gray-400">
-                  <div className="container mx-auto text-center">
-                    <p>&copy; {new Date().getFullYear()} Data Fortress Ltd. All rights reserved.</p>
-                  </div>
-                </footer>
-                <CartDrawer />
-                <CustomCursor />
-                <AIChatbot />
-                <Toaster />
-              </Suspense>
-            </CartProvider>
-          </MetamaskProvider>
-        </ClerkProvider>
+    <html lang="tr" suppressHydrationWarning>
+      <body className={`${inter.className} antialiased min-h-screen bg-background text-foreground`}>
+        <Providers>
+          <div className="flex flex-col min-h-screen">
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+        </Providers>
         <Analytics />
-        <SpeedInsights />
       </body>
     </html>
   )

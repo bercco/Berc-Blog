@@ -1,0 +1,70 @@
+---
+title: "Production AI Sistemleri: Gerçek Dünya Dersleri"
+date: "2026-01-08"
+tags: ["ai", "systems", "production"]
+excerpt: "Toy demo'lardan production-ready AI sistemlerine geçişte öğrendiğimiz acı dersler."
+---
+
+## Demo vs Production
+
+Bir AI modeli demo'da harika çalışabilir. Ama production'a taşıdığınızda bambaşka bir dünyayla karşılaşırsınız.
+
+### Demo'da Görmezden Gelinen Gerçekler
+
+```javascript
+// Demo kodu
+const response = await model.generate(prompt)
+return response
+
+// Production kodu
+try {
+  const response = await retry(
+    () => model.generate(prompt),
+    { maxRetries: 3, backoff: 'exponential' }
+  )
+  await logResponse(response)
+  await validateOutput(response)
+  await cacheResult(response)
+  return sanitize(response)
+} catch (error) {
+  await alertOps(error)
+  return fallback()
+}
+```
+
+## Öğrenilen Dersler
+
+### 1. Latency Her Şeydir
+
+Kullanıcılar 2 saniyeden fazla beklemez. Streaming response'lar hayat kurtarır.
+
+### 2. Fallback Stratejisi Şart
+
+- Primary model çökerse ne olacak?
+- Rate limit'e takılırsan?
+- Unexpected output gelirse?
+
+### 3. Observability
+
+Göremediğin şeyi düzeltemezsin. Her prompt, her response, her latency metric'i logla.
+
+## Maliyet Optimizasyonu
+
+AI API'ları pahalı. Optimizasyon stratejileri:
+
+| Strateji | Tasarruf | Complexity |
+|----------|----------|------------|
+| Caching | %40-60 | Düşük |
+| Smaller models | %30-50 | Orta |
+| Batch processing | %20-40 | Yüksek |
+
+## Güvenlik
+
+Prompt injection, output manipulation, data leakage... AI güvenliği yeni bir alan ve henüz best practice'ler oturmadı.
+
+## Sonuç
+
+Production AI zor. Ama imkansız değil. Doğru altyapı ve defensive programming ile başarılabilir.
+
+Bir sonraki yazıda: **AI Guardrails ve Safety Patterns**
+```
