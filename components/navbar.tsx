@@ -26,6 +26,9 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm">
+            <Link href="/blog">Blog</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
             <Link href="/tags">Tags</Link>
           </Button>
           <Button asChild variant="ghost" size="icon">
