@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
 import { getAllPosts, getPostBySlug } from "@/lib/posts"
-import { serialize } from "next-mdx-remote/serialize"
 import { MDXContent } from "@/components/mdx-content"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -51,7 +50,7 @@ export default async function BlogPage({ params }: Props) {
     notFound()
   }
 
-  const mdxSource = await serialize(post.content)
+  const mdxSource = post.content
 
   const formattedDate = new Date(post.date).toLocaleDateString("tr-TR", {
     year: "numeric",
