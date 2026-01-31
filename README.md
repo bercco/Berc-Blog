@@ -1,59 +1,107 @@
-# Supabase Dashboard for Hoodie Store
+# BERC — Notes on Systems, Markets & Technology
 
-This project demonstrates how to use Supabase with Next.js to create a product management dashboard for an e-commerce store.
+> Thinking in systems. Writing in public.  
+> Software, finance, strategy, and the mechanics behind modern power.
 
-## Features
+---
 
-- Authentication with Supabase Auth
-- Product management (CRUD operations)
-- Real-time updates with Supabase Realtime
-- Shopify product synchronization
-- Responsive UI with shadcn/ui components
+## What is this?
 
-## Environment Variables
+**BERC** is a personal knowledge base and editorial blog focused on:
 
-This project uses the following environment variables:
+- 🧠 **Systems thinking** (technology, economics, organizations)
+- 📈 **Markets & finance** (macro, volatility, incentives)
+- 🧩 **Software architecture** (from MVPs to scalable systems)
+- 🧪 **Experiments & ideas** (things I’m testing, breaking, rebuilding)
 
-\`\`\`env
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-\`\`\`
+This is not a tutorial farm.  
+It’s a place to **think clearly**, document reasoning, and ship ideas.
 
-## Getting Started
+---
 
-1. Clone the repository
-2. Install dependencies with `npm install`
-3. Set up your Supabase project and add the environment variables
-4. Run the development server with `npm run dev`
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+## Why this exists
 
-## Database Setup
+Most content online optimizes for:
+- clicks  
+- trends  
+- shallow explanations  
 
-The SQL schema for the Supabase database is included in the `supabase/schema.sql` file. You can run this in the Supabase SQL editor to set up the required tables and policies.
+This blog optimizes for:
+- **clarity**
+- **first-principles thinking**
+- **long-term signal over short-term noise**
 
-## Authentication
+If you’re looking for polished marketing talk, this isn’t it.  
+If you care about *how things actually work*, welcome.
 
-The project includes sign-in and sign-up pages that use Supabase Auth. Users can create accounts and sign in to access the dashboard.
+---
 
-## Product Management
+## Topics I write about
 
-The dashboard allows you to:
+### 🧠 Systems & Strategy
+- Incentives, power structures, feedback loops  
+- Why systems fail — and how they can be redesigned  
 
-- View all products
-- Add new products
-- Edit existing products
-- Delete products
-- Filter products by category
-- Search for products
+### 💻 Software & Engineering
+- Full-stack architecture
+- Automation, AI workflows, tooling
+- Building lean but extensible products
 
-## Shopify Integration
+### 📊 Markets & Economics
+- Volatility, risk, macro signals
+- Capital flows and asymmetric bets
+- نقد systems > hype narratives
 
-The project includes a sample implementation of syncing products with Shopify. In a real application, you would use the Shopify API to fetch products and sync them with your Supabase database.
+### ✍️ Essays & Notes
+- Short observations
+- Mental models
+- Ongoing research logs
 
-## Real-time Updates
+---
 
-The dashboard uses Supabase Realtime to automatically update when products are added, edited, or deleted.
-\`\`\`
+## How to read this blog
 
-Let's create a navigation component for the dashboard:
+You can:
+- Read casually → skim essays  
+- Go deep → follow linked notes & references  
+- Track thinking → posts evolve over time  
+
+Some ideas are **unfinished by design**.
+
+---
+
+## Tech stack (for the curious)
+
+- **Framework:** Next.js  
+- **Deployment:** Vercel  
+- **Content:** Markdown / MDX  
+- **Philosophy:** minimal UI, maximal signal  
+
+The UI stays quiet so the ideas can be loud.
+
+---
+
+## Who this is for
+
+This blog is for people who:
+- Think ahead of their environment
+- Are tired of surface-level content
+- Build, analyze, or invest
+- Prefer uncomfortable truth over comforting noise
+
+If that resonates, you’re in the right place.
+
+---
+
+## Contact / Presence
+
+- Writing here is the main channel.
+- If something is worth building together, it will be obvious.
+
+---
+
+> Build systems.  
+> Question assumptions.  
+> Leave a trail of thinking.
+
+© BERC
