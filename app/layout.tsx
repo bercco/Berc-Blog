@@ -25,11 +25,13 @@ export const metadata: Metadata = {
     siteName: "Berkay Blog",
     title: "Berkay Blog",
     description: "Tech, systems, future.",
+    images: ["/og?title=Berkay+Blog&excerpt=Tech,+systems,+future."],
   },
   twitter: {
     card: "summary_large_image",
     title: "Berkay Blog",
     description: "Tech, systems, future.",
+    images: ["/og?title=Berkay+Blog&excerpt=Tech,+systems,+future."],
   },
   robots: {
     index: true,
