@@ -1,8 +1,8 @@
 import { getAllPosts } from "@/lib/posts"
 import { BlogCard } from "@/components/blog-card"
 
-export default function Home() {
-  const posts = getAllPosts()
+export default async function Home() {
+  const posts = await getAllPosts()
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
@@ -25,7 +25,7 @@ export default function Home() {
         {posts.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-muted-foreground mb-4">Henüz yazı yok.</p>
-            <p className="text-sm text-muted-foreground">content/blog klasörüne .mdx dosyaları ekleyerek başlayın.</p>
+            <p className="text-sm text-muted-foreground">Admin panelinden yeni yazı ekleyebilirsiniz.</p>
           </div>
         ) : (
           <div className="space-y-4">
