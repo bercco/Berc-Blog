@@ -44,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="tr" suppressHydrationWarning>
+    <html lang="tr" suppressHydrationWarning data-scroll-behavior="smooth">
       <body className={`${inter.className} antialiased min-h-screen bg-background text-foreground`}>
         <Providers>
           <div className="flex flex-col min-h-screen">
