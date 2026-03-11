@@ -8,8 +8,7 @@ interface Post {
   title: string
   date: string
   tags: string[]
-  excerpt: string
-  coverImage?: string
+  description: string
   content: string
 }
 
@@ -22,9 +21,8 @@ interface PostEditorProps {
 export function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
   const [title, setTitle] = useState(post?.title || "")
   const [slug, setSlug] = useState(post?.slug || "")
-  const [date, setDate] = useState(post?.date || new Date().toISOString().split("T")[0])
-  const [excerpt, setExcerpt] = useState(post?.excerpt || "")
-  const [coverImage, setCoverImage] = useState(post?.coverImage || "")
+  const [date, setDate] = useState(post?.date ? post.date.split("T")[0] : new Date().toISOString().split("T")[0])
+  const [description, setDescription] = useState(post?.description || "")
   const [tags, setTags] = useState<string[]>(post?.tags || [])
   const [tagInput, setTagInput] = useState("")
   const [content, setContent] = useState(post?.content || "")
@@ -70,8 +68,7 @@ export function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
         title,
         date,
         tags,
-        excerpt,
-        coverImage: coverImage || undefined,
+        description,
         content,
       })
     } finally {
@@ -129,44 +126,28 @@ export function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label htmlFor="date" className="block text-sm font-medium text-foreground">
-                Tarih
-              </label>
-              <input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-3 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="coverImage" className="block text-sm font-medium text-foreground">
-                Kapak Gorseli URL
-              </label>
-              <input
-                id="coverImage"
-                type="url"
-                value={coverImage}
-                onChange={(e) => setCoverImage(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="w-full px-4 py-3 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
+          <div className="space-y-2">
+            <label htmlFor="date" className="block text-sm font-medium text-foreground">
+              Tarih
+            </label>
+            <input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full md:w-1/2 px-4 py-3 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
+            />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="excerpt" className="block text-sm font-medium text-foreground">
-              Ozet
+            <label htmlFor="description" className="block text-sm font-medium text-foreground">
+              Aciklama
             </label>
             <textarea
-              id="excerpt"
-              value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
-              placeholder="Yazinin kisa ozeti..."
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Yazinin kisa aciklamasi..."
               rows={2}
               className="w-full px-4 py-3 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground resize-none"
             />

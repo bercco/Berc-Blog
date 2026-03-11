@@ -1,45 +1,26 @@
 import { NextResponse } from "next/server"
-import fs from "fs"
-import path from "path"
-import matter from "gray-matter"
+import { neon } from "@neondatabase/serverless"
 
-const BLOG_PATH = path.join(process.cwd(), "content/blog")
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET() {
   try {
-    if (!fs.existsSync(BLOG_PATH)) {
-      return NextResponse.json([])
-    }
+    const posts = await sql`
+      SELECT id, slug, title, description, content, date, tags, created_at, updated_at
+      FROM posts
+      ORDER BY date DESC
+    `
 
-    const files = fs.readdirSync(BLOG_PATH).filter((file) => file.endsWith(".mdx"))
-
-    const posts = files.map((file) => {
-      const slug = file.replace(".mdx", "")
-      const raw = fs.readFileSync(path.join(BLOG_PATH, file), "utf-8")
-      const { data, content } = matter(raw)
-
-      return {
-        slug,
-        title: data.title || "Untitled",
-        date: data.date || new Date().toISOString(),
-        tags: data.tags || [],
-        excerpt: data.excerpt || "",
-        coverImage: data.coverImage,
-        content,
-      }
-    })
-
-    return NextResponse.json(
-      posts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    )
-  } catch {
+    return NextResponse.json(posts)
+  } catch (error) {
+    console.error("Posts fetch error:", error)
     return NextResponse.json({ error: "Yazilar yuklenemedi" }, { status: 500 })
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const { slug, title, date, tags, excerpt, coverImage, content } = await request.json()
+    const { slug, title, date, tags, description, content } = await request.json()
 
     if (!slug || !title || !content) {
       return NextResponse.json(
@@ -55,28 +36,32 @@ export async function POST(request: Request) {
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, "")
 
-    const filePath = path.join(BLOG_PATH, `${cleanSlug}.mdx`)
+    // Mevcut post var mi kontrol et
+    const existing = await sql`SELECT id FROM posts WHERE slug = ${cleanSlug}`
 
-    // Frontmatter olustur
-    const frontmatter = {
-      title,
-      date: date || new Date().toISOString().split("T")[0],
-      tags: tags || [],
-      excerpt: excerpt || "",
-      ...(coverImage && { coverImage }),
+    if (existing.length > 0) {
+      // Guncelle
+      await sql`
+        UPDATE posts 
+        SET title = ${title}, 
+            description = ${description || null}, 
+            content = ${content}, 
+            date = ${date || new Date().toISOString().split("T")[0]}, 
+            tags = ${tags || []},
+            updated_at = NOW()
+        WHERE slug = ${cleanSlug}
+      `
+    } else {
+      // Yeni kayit ekle
+      await sql`
+        INSERT INTO posts (slug, title, description, content, date, tags)
+        VALUES (${cleanSlug}, ${title}, ${description || null}, ${content}, ${date || new Date().toISOString().split("T")[0]}, ${tags || []})
+      `
     }
-
-    const fileContent = matter.stringify(content, frontmatter)
-
-    // Klasor yoksa olustur
-    if (!fs.existsSync(BLOG_PATH)) {
-      fs.mkdirSync(BLOG_PATH, { recursive: true })
-    }
-
-    fs.writeFileSync(filePath, fileContent)
 
     return NextResponse.json({ success: true, slug: cleanSlug })
-  } catch {
+  } catch (error) {
+    console.error("Post save error:", error)
     return NextResponse.json({ error: "Yazi kaydedilemedi" }, { status: 500 })
   }
 }
@@ -89,16 +74,15 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Slug zorunludur" }, { status: 400 })
     }
 
-    const filePath = path.join(BLOG_PATH, `${slug}.mdx`)
+    const result = await sql`DELETE FROM posts WHERE slug = ${slug} RETURNING id`
 
-    if (!fs.existsSync(filePath)) {
+    if (result.length === 0) {
       return NextResponse.json({ error: "Yazi bulunamadi" }, { status: 404 })
     }
 
-    fs.unlinkSync(filePath)
-
     return NextResponse.json({ success: true })
-  } catch {
+  } catch (error) {
+    console.error("Post delete error:", error)
     return NextResponse.json({ error: "Yazi silinemedi" }, { status: 500 })
   }
 }

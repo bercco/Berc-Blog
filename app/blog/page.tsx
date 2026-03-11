@@ -7,8 +7,8 @@ export const metadata: Metadata = {
   description: "Yazılım, sistem tasarımı ve geleceğin teknolojileri hakkında tüm blog yazıları.",
 }
 
-export default function BlogPage() {
-  const posts = getAllPosts()
+export default async function BlogPage() {
+  const posts = await getAllPosts()
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
@@ -23,7 +23,7 @@ export default function BlogPage() {
         <div className="text-center py-16">
           <p className="text-muted-foreground mb-4">Henüz yazı yok.</p>
           <p className="text-sm text-muted-foreground">
-            content/blog klasörüne .mdx dosyaları ekleyerek başlayın.
+            Admin panelinden yeni yazı ekleyebilirsiniz.
           </p>
         </div>
       ) : (

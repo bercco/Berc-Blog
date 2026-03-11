@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   description: "Tüm etiketler",
 }
 
-export default function TagsPage() {
-  const tags = getAllTags()
+export default async function TagsPage() {
+  const tags = await getAllTags()
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">

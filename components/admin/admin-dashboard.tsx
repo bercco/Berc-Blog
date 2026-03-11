@@ -9,8 +9,7 @@ interface Post {
   title: string
   date: string
   tags: string[]
-  excerpt: string
-  coverImage?: string
+  description: string
   content: string
 }
 
@@ -155,7 +154,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <tr key={post.slug} className="hover:bg-muted/30 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-medium text-foreground">{post.title}</div>
-                    <div className="text-sm text-muted-foreground truncate max-w-md">{post.excerpt}</div>
+                    <div className="text-sm text-muted-foreground truncate max-w-md">{post.description}</div>
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
                     {new Date(post.date).toLocaleDateString("tr-TR")}

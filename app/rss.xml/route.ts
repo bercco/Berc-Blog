@@ -3,7 +3,7 @@ import { getAllPosts } from "@/lib/posts"
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com"
 
 export async function GET() {
-  const posts = getAllPosts()
+  const posts = await getAllPosts()
 
   const itemsXml = posts
     .map(
