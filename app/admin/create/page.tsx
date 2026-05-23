@@ -212,10 +212,32 @@ export default function CreateAdminBlogPage() {
   }
 
   const publishBlog = async () => {
-    if (!title.trim() || !content.trim()) {
-      alert('Başlık ve içerik gereklidir')
-      return
+    if (!title.trim() || !content.trim()) return
+
+    setIsPublishing(true)
+    try {
+      const coverImage = images.length > 0 ? images[0].url : null
+
+      const { error } = await supabase.from('posts').insert({
+        title,
+        content,
+        excerpt,
+        tags,
+        status,
+        cover_image: coverImage,
+        user_id: user?.id,
+      })
+
+      if (error) throw error
+
+      router.push('/admin')
+    } catch (error) {
+      console.error('[v0] Error publishing:', error)
+      alert('Yazı kaydedilirken hata oluştu.')
+    } finally {
+      setIsPublishing(false)
     }
+  }
 
     setIsPublishing(true)
 
