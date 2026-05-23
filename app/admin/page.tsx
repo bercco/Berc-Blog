@@ -16,6 +16,8 @@ import {
   Clock,
   CheckCircle,
   Search,
+  Mail,
+  Trash,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
@@ -29,14 +31,23 @@ interface Post {
   cover_image: string | null
 }
 
+interface Subscriber {
+  id: string
+  email: string
+  subscribed_at: string
+  is_active: boolean
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const supabase = createClient()
   const [posts, setPosts] = useState<Post[]>([])
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState('published')
+  const [activeTab, setActiveTab] = useState('posts')
+  const [mailDraft, setMailDraft] = useState('')
 
   useEffect(() => {
     const loadData = async () => {
@@ -52,14 +63,23 @@ export default function AdminDashboard() {
 
         setUser(user)
 
-        const { data, error } = await supabase
+        const { data: postsData, error: postsError } = await supabase
           .from('posts')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
 
-        if (error) throw error
-        setPosts(data || [])
+        if (postsError) throw postsError
+        setPosts(postsData || [])
+
+        const { data: subscribersData, error: subscribersError } = await supabase
+          .from('subscribers')
+          .select('*')
+          .eq('is_active', true)
+          .order('subscribed_at', { ascending: false })
+
+        if (subscribersError) throw subscribersError
+        setSubscribers(subscribersData || [])
       } catch (err) {
         console.error('[v0] Error loading posts:', err)
       } finally {
@@ -87,6 +107,23 @@ export default function AdminDashboard() {
       setPosts(posts.filter((p) => p.id !== id))
     } catch (err) {
       console.error('[v0] Error deleting post:', err)
+    }
+  }
+
+  const handleDeleteSubscriber = async (id: string) => {
+    if (!confirm('Bu aboneyi silmek istediğinizden emin misiniz?')) return
+
+    try {
+      const { error } = await supabase
+        .from('subscribers')
+        .update({ is_active: false })
+        .eq('id', id)
+
+      if (error) throw error
+
+      setSubscribers(subscribers.filter((s) => s.id !== id))
+    } catch (err) {
+      console.error('[v0] Error deleting subscriber:', err)
     }
   }
 
@@ -154,21 +191,26 @@ export default function AdminDashboard() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
-              <TabsTrigger value="published" className="flex items-center gap-2">
+            <TabsList className="grid w-full max-w-2xl grid-cols-5">
+              <TabsTrigger value="posts" className="flex items-center gap-2 text-xs sm:text-sm">
                 <CheckCircle className="w-4 h-4" />
-                Yayınlanan
+                Yazılar
               </TabsTrigger>
-              <TabsTrigger value="draft" className="flex items-center gap-2">
+              <TabsTrigger value="draft" className="flex items-center gap-2 text-xs sm:text-sm">
                 <Clock className="w-4 h-4" />
                 Taslak
               </TabsTrigger>
-              <TabsTrigger value="all" className="flex items-center gap-2">
+              <TabsTrigger value="all" className="flex items-center gap-2 text-xs sm:text-sm">
                 Tümü
+              </TabsTrigger>
+              <TabsTrigger value="newsletter" className="flex items-center gap-2 text-xs sm:text-sm">
+                <Mail className="w-4 h-4" />
+                Bülten
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value={activeTab} className="mt-6">
+            {/* Posts Tab */}
+            <TabsContent value="posts" className="mt-6">
               {filteredPosts.length === 0 ? (
                 <Card className="p-12 text-center">
                   <p className="text-muted-foreground mb-4">

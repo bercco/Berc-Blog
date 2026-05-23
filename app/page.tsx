@@ -1,5 +1,6 @@
 import { getAllPosts } from "@/lib/posts"
 import { BlogCard } from "@/components/blog-card"
+import { NewsletterForm } from "@/components/newsletter-form"
 
 export default function Home() {
   const posts = getAllPosts()
@@ -13,6 +14,17 @@ export default function Home() {
           Yazılım, sistem tasarımı ve geleceğin teknolojileri hakkında derinlemesine içerikler. Production-ready
           insights.
         </p>
+      </section>
+
+      {/* Newsletter Section */}
+      <section className="mb-16 p-8 rounded-lg border border-border/50 bg-muted/30">
+        <div className="max-w-2xl">
+          <h2 className="text-2xl font-semibold mb-2">Bültenimize Abone Olun</h2>
+          <p className="text-muted-foreground mb-4">
+            Yeni yazılar ve güzel içerikler doğrudan e-posta adresinize.
+          </p>
+          <NewsletterForm />
+        </div>
       </section>
 
       {/* Posts Grid */}
