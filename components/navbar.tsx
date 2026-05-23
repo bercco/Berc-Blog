@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
-import { Moon, Sun, Rss, Github } from "lucide-react"
+import { Moon, Sun, Rss, Github, PenSquare } from "lucide-react"
 import { useEffect, useState } from "react"
 
 export function Navbar() {
@@ -30,6 +30,12 @@ export function Navbar() {
           </Button>
           <Button asChild variant="ghost" size="sm">
             <Link href="/tags">Tags</Link>
+          </Button>
+          <Button asChild variant="default" size="sm">
+            <Link href="/create" className="flex items-center gap-1.5">
+              <PenSquare className="w-4 h-4" />
+              Oluştur
+            </Link>
           </Button>
           <Button asChild variant="ghost" size="icon">
             <a href="/rss.xml" aria-label="RSS Feed">
