@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Providers } from "./providers"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import { PoissonBackground } from "@/components/poisson-background"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -47,7 +48,8 @@ export default function RootLayout({
     <html lang="tr" suppressHydrationWarning>
       <body className={`${inter.className} antialiased min-h-screen bg-background text-foreground`}>
         <Providers>
-          <div className="flex flex-col min-h-screen">
+          <PoissonBackground />
+          <div className="flex flex-col min-h-screen relative z-0">
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
