@@ -9,9 +9,18 @@ import { useEffect, useState } from "react"
 export function Navbar() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const supabase = createClient()
 
   useEffect(() => {
     setMounted(true)
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    checkUser()
   }, [])
 
   return (
@@ -31,12 +40,21 @@ export function Navbar() {
           <Button asChild variant="ghost" size="sm">
             <Link href="/tags">Tags</Link>
           </Button>
-          <Button asChild variant="default" size="sm">
-            <Link href="/create" className="flex items-center gap-1.5">
-              <PenSquare className="w-4 h-4" />
-              Oluştur
-            </Link>
-          </Button>
+          {user ? (
+            <Button asChild variant="default" size="sm">
+              <Link href="/admin" className="flex items-center gap-1.5">
+                <Settings className="w-4 h-4" />
+                Admin
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild variant="default" size="sm">
+              <Link href="/auth/login" className="flex items-center gap-1.5">
+                <PenSquare className="w-4 h-4" />
+                Giriş Yap
+              </Link>
+            </Button>
+          )}
           <Button asChild variant="ghost" size="icon">
             <a href="/rss.xml" aria-label="RSS Feed">
               <Rss className="w-4 h-4" />
