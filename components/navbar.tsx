@@ -3,8 +3,9 @@
 import Link from "next/link"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
-import { Moon, Sun, Rss, Github, PenSquare } from "lucide-react"
+import { Moon, Sun, Rss, Github, PenSquare, Settings } from "lucide-react"
 import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
